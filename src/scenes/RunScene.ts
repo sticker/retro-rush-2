@@ -33,6 +33,7 @@ export class RunScene extends Phaser.Scene {
   private resultText!: Phaser.GameObjects.Text;
   private current?: MicrogameInstance;
   private currentDefinition?: MicrogameDefinition;
+  private gameQueue: MicrogameDefinition[] = [];
   private previousId?: string;
   private score = 0;
   private lives = 3;
@@ -51,6 +52,7 @@ export class RunScene extends Phaser.Scene {
     this.rng = new Phaser.Math.RandomDataGenerator([`${Date.now()}-${Math.random()}`]);
     this.score = 0;
     this.lives = 3;
+    this.gameQueue = [];
     this.pendingGameOver = false;
 
     this.createCabinet();
@@ -201,8 +203,7 @@ export class RunScene extends Phaser.Scene {
     this.gameLayer.removeAll(true);
     this.timerFill.displayWidth = 316;
     const theme = getThemeForScore(this.score);
-    const candidates = microgames.filter((game) => game.id !== this.previousId);
-    this.currentDefinition = this.rng.pick(candidates.length > 0 ? candidates : microgames);
+    this.currentDefinition = this.nextMicrogame();
     this.previousId = this.currentDefinition.id;
     this.current = undefined;
     this.state = "briefing";
@@ -245,7 +246,7 @@ export class RunScene extends Phaser.Scene {
       scene: this,
       layer: this.gameLayer,
       arena: this.arena,
-      difficulty: Math.floor(this.score / 4),
+      difficulty: Math.floor(this.score / 4) + this.getClearCycle(),
       round: this.score + 1,
       speed,
       rng: this.rng,
@@ -289,17 +290,52 @@ export class RunScene extends Phaser.Scene {
   private showGameOver(): void {
     this.state = "gameover";
     this.gameLayer.removeAll(true);
+    this.resultBadge.setVisible(false);
+    this.resultText.setVisible(false);
+    this.instructionPlaque.setVisible(false);
+    this.instructionText.setVisible(false);
+    this.scoreText.setVisible(false);
+    this.livesText.setVisible(false);
+    this.eraText.setVisible(false);
+    this.miniTitleText.setVisible(false);
+    this.timerFill.setVisible(false);
+    this.timerFrame.setVisible(false);
     const best = recordHighScore(this.score);
-    const panel = this.add.image(GAME_WIDTH / 2, 372, ASSET_KEYS.resultBadge);
-    panel.setDepth(880).setDisplaySize(380, 180).setTint(0xff775e);
-    popIn(this, panel);
 
-    addPixelText(this, GAME_WIDTH / 2, 278, "GAME OVER", 42, "#ff775e").setDepth(890);
-    addPixelText(this, GAME_WIDTH / 2, 350, `SCORE ${this.score}`, 30, "#fff6ce").setDepth(890);
-    addPixelText(this, GAME_WIDTH / 2, 398, `BEST ${best}`, 24, "#9eefff").setDepth(890);
-    addPixelText(this, GAME_WIDTH / 2, 470, "TAP TO RETRY", 24, "#a6ff6d").setDepth(890);
+    const overlay = this.add.graphics().setDepth(875);
+    overlay.fillStyle(0x05070a, 0.78).fillRect(
+      this.arena.left,
+      this.arena.top,
+      this.arena.width,
+      this.arena.height,
+    );
+    overlay.lineStyle(2, 0xffdf72, 0.36).strokeRect(
+      this.arena.left + 8,
+      this.arena.top + 8,
+      this.arena.width - 16,
+      this.arena.height - 16,
+    );
 
-    this.input.once("pointerdown", () => this.scene.restart());
+    const scorePanel = this.add
+      .rectangle(GAME_WIDTH / 2, 378, 284, 96, 0x06101a, 0.9)
+      .setDepth(880)
+      .setStrokeStyle(2, 0xffdf72, 0.42);
+    scorePanel.setAlpha(0).setScale(0.88);
+    this.tweens.add({
+      targets: scorePanel,
+      alpha: 1,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 180,
+      ease: "Back.easeOut",
+    });
+
+    addPixelText(this, GAME_WIDTH / 2, 276, "GAME OVER", 38, "#ff775e").setDepth(890);
+    addPixelText(this, GAME_WIDTH / 2, 362, `SCORE ${this.score}`, 30, "#fff6ce").setDepth(890);
+    addPixelText(this, GAME_WIDTH / 2, 404, `BEST ${best}`, 18, "#9eefff").setDepth(890);
+
+    this.createGameOverButton(156, 486, "RETRY", () => this.scene.restart());
+    this.createGameOverButton(324, 486, "TOP", () => this.scene.start("TitleScene"));
     this.input.keyboard?.once("keydown-SPACE", () => this.scene.restart());
     this.input.keyboard?.once("keydown-ENTER", () => this.scene.restart());
   }
@@ -314,7 +350,7 @@ export class RunScene extends Phaser.Scene {
   }
 
   private getSpeed(): number {
-    return Phaser.Math.Clamp(1 + this.score * 0.045, 1, 1.85);
+    return Phaser.Math.Clamp(1 + this.score * 0.04 + this.getClearCycle() * 0.12, 1, 2.15);
   }
 
   private restartToTitle(): void {
@@ -323,5 +359,40 @@ export class RunScene extends Phaser.Scene {
 
   private showTapRipple(pointer: Phaser.Input.Pointer): void {
     tapRipple(this, pointer.x, pointer.y, getThemeForScore(this.score).secondary);
+  }
+
+  private nextMicrogame(): MicrogameDefinition {
+    if (this.gameQueue.length === 0) {
+      this.gameQueue = Phaser.Utils.Array.Shuffle([...microgames]);
+      if (this.previousId && this.gameQueue[0]?.id === this.previousId && this.gameQueue.length > 1) {
+        const first = this.gameQueue[0]!;
+        this.gameQueue[0] = this.gameQueue[1]!;
+        this.gameQueue[1] = first;
+      }
+    }
+    return this.gameQueue.shift() ?? microgames[0]!;
+  }
+
+  private getClearCycle(): number {
+    return Math.floor(this.score / microgames.length);
+  }
+
+  private createGameOverButton(x: number, y: number, label: string, action: () => void): void {
+    const button = this.add
+      .rectangle(x, y, 132, 54, 0x0b1018, 0.95)
+      .setDepth(900)
+      .setStrokeStyle(3, 0xffdf72, 0.86)
+      .setInteractive({ useHandCursor: true });
+    const text = addPixelText(this, x, y, label, 22, "#fff6ce").setDepth(905);
+
+    button.on("pointerover", () => {
+      button.setFillStyle(0x172231, 1);
+      pop(this, text, 1.08, 90);
+    });
+    button.on("pointerout", () => button.setFillStyle(0x0b1018, 0.95));
+    button.on("pointerdown", () => {
+      sfx.play("start");
+      action();
+    });
   }
 }

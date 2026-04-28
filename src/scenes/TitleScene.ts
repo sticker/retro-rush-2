@@ -13,6 +13,8 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.startLocked = false;
+
     const backdrop = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, ASSET_KEYS.titleBackdrop);
     coverImage(backdrop, GAME_WIDTH, GAME_HEIGHT);
 
