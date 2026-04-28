@@ -2,6 +2,7 @@ export type SfxKey =
   | "start"
   | "clear"
   | "miss"
+  | "gameover"
   | "cue"
   | "blip"
   | "coin"
@@ -9,7 +10,38 @@ export type SfxKey =
   | "jump"
   | "perfect"
   | "swap"
+  | "wrong"
   | "mash";
+
+const SAMPLE_PATHS: Partial<Record<SfxKey, string>> = {
+  clear: "/assets/sounds/success.mp3",
+  miss: "/assets/sounds/fail.mp3",
+  gameover: "/assets/sounds/gameover.mp3",
+  cue: "/assets/sounds/NextGame.mp3",
+  blip: "/assets/sounds/beep.mp3",
+  coin: "/assets/sounds/correct.mp3",
+  hit: "/assets/sounds/correct.mp3",
+  jump: "/assets/sounds/jump.mp3",
+  perfect: "/assets/sounds/success.mp3",
+  swap: "/assets/sounds/push.wav",
+  wrong: "/assets/sounds/beep.mp3",
+  mash: "/assets/sounds/push.wav",
+};
+
+const SAMPLE_VOLUMES: Partial<Record<SfxKey, number>> = {
+  clear: 0.78,
+  miss: 0.72,
+  gameover: 0.8,
+  cue: 0.78,
+  blip: 0.38,
+  coin: 0.72,
+  hit: 0.72,
+  jump: 0.68,
+  perfect: 0.76,
+  swap: 0.42,
+  wrong: 0.5,
+  mash: 0.64,
+};
 
 declare global {
   interface Window {
@@ -20,12 +52,15 @@ declare global {
 export class Sfx {
   private context?: AudioContext;
   private enabled = true;
+  private readonly samplePools = new Map<SfxKey, HTMLAudioElement[]>();
+  private readonly sampleIndexes = new Map<SfxKey, number>();
 
   unlock(): void {
     const context = this.getContext();
     if (context?.state === "suspended") {
       void context.resume();
     }
+    this.primeSamples();
   }
 
   play(key: SfxKey): void {
@@ -34,6 +69,13 @@ export class Sfx {
     }
 
     const now = this.getContext()?.currentTime ?? 0;
+    if (this.playSample(key, now)) {
+      return;
+    }
+    this.playGenerated(key, now);
+  }
+
+  private playGenerated(key: SfxKey, now: number): void {
     switch (key) {
       case "start":
         this.tone(196, 0.05, "square", now, 0.055);
@@ -51,6 +93,11 @@ export class Sfx {
       case "miss":
         this.sweep(220, 92, 0.22, "sawtooth", now, 0.055);
         this.noise(0.12, now, 0.035);
+        break;
+      case "gameover":
+        this.sweep(196, 82, 0.35, "sawtooth", now, 0.055);
+        this.tone(123, 0.16, "triangle", now + 0.16, 0.035);
+        this.noise(0.18, now + 0.06, 0.032);
         break;
       case "cue":
         this.tone(392, 0.045, "square", now, 0.04);
@@ -88,10 +135,65 @@ export class Sfx {
         this.tone(170 + Math.random() * 100, 0.022, "square", now, 0.03);
         this.noise(0.018, now, 0.02);
         break;
+      case "wrong":
       case "blip":
         this.tone(740, 0.035, "square", now, 0.03);
         break;
     }
+  }
+
+  private primeSamples(): void {
+    for (const key of Object.keys(SAMPLE_PATHS) as SfxKey[]) {
+      this.getSamplePool(key);
+    }
+  }
+
+  private playSample(key: SfxKey, now: number): boolean {
+    const pool = this.getSamplePool(key);
+    if (!pool) {
+      return false;
+    }
+
+    const index = this.sampleIndexes.get(key) ?? 0;
+    const sample = pool[index % pool.length];
+    if (!sample) {
+      return false;
+    }
+    this.sampleIndexes.set(key, index + 1);
+
+    try {
+      sample.pause();
+      sample.currentTime = 0;
+      const playPromise = sample.play();
+      if (playPromise) {
+        void playPromise.catch(() => this.playGenerated(key, now));
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private getSamplePool(key: SfxKey): HTMLAudioElement[] | undefined {
+    const existing = this.samplePools.get(key);
+    if (existing) {
+      return existing;
+    }
+
+    const path = SAMPLE_PATHS[key];
+    if (!path || typeof Audio === "undefined") {
+      return undefined;
+    }
+
+    const size = key === "mash" || key === "coin" || key === "hit" ? 5 : 3;
+    const pool = Array.from({ length: size }, () => {
+      const audio = new Audio(path);
+      audio.preload = "auto";
+      audio.volume = SAMPLE_VOLUMES[key] ?? 0.68;
+      return audio;
+    });
+    this.samplePools.set(key, pool);
+    return pool;
   }
 
   private getContext(): AudioContext | undefined {

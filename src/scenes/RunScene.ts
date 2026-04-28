@@ -289,6 +289,7 @@ export class RunScene extends Phaser.Scene {
 
   private showGameOver(): void {
     this.state = "gameover";
+    sfx.play("gameover");
     this.gameLayer.removeAll(true);
     this.resultBadge.setVisible(false);
     this.resultText.setVisible(false);

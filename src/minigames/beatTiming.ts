@@ -87,7 +87,7 @@ class BeatTimingGame {
     const distance = Math.abs(this.cursor.x - this.gate.x);
     if (distance <= 34) {
       this.hits += 1;
-      this.ctx.sfx.play(distance <= 14 ? "perfect" : "hit");
+      this.ctx.sfx.play("coin");
       this.status.setText(`${this.hits}/${this.required}`);
       pop(this.ctx.scene, this.gate, distance <= 14 ? 1.22 : 1.12, 110);
       pop(this.ctx.scene, this.status, 1.18, 90);
@@ -98,7 +98,7 @@ class BeatTimingGame {
       return;
     }
 
-    this.ctx.sfx.play("miss");
+    this.ctx.sfx.play("wrong");
     this.ctx.scene.cameras.main.shake(90, 0.004);
     sparkleBurst(this.ctx.scene, this.cursor.x, this.cursor.y, this.ctx.theme.danger, 10, 830);
     if (this.attempts - this.hits >= 2) {
