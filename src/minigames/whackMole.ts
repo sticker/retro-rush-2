@@ -84,17 +84,32 @@ class WhackMoleGame {
       .setDisplaySize(56, 49)
       .setOrigin(0.5, 1)
       .setAlpha(0)
-      .setInteractive({ useHandCursor: true });
+      .disableInteractive();
     const moleScaleX = mole.scaleX;
     const moleScaleY = mole.scaleY;
     mole.setScale(moleScaleX, moleScaleY * 0.25);
     const front = this.ctx.scene.add.image(x, y, ASSET_KEYS.moleHoleFront).setDisplaySize(102, 67);
     const entry: MoleHole = { x, y, mole, front, moleScaleX, moleScaleY, active: false };
-    const whack = () => this.whack(entry);
-    mole.on("pointerdown", whack);
-    this.life.add(() => mole.off("pointerdown", whack));
     this.ctx.layer.add([holeBack, mole, front]);
     this.holes.push(entry);
+
+    if (this.holes.length === 1) {
+      const whackAt = (pointer: Phaser.Input.Pointer) => this.whackAt(pointer.x, pointer.y);
+      this.ctx.scene.input.on("pointerdown", whackAt);
+      this.life.add(() => this.ctx.scene.input.off("pointerdown", whackAt));
+    }
+  }
+
+  private whackAt(x: number, y: number): void {
+    const activeHoles = this.holes.filter((hole) => hole.active);
+    const target = activeHoles.find((hole) => {
+      const dx = Math.abs(x - hole.x);
+      const dy = Math.abs(y - (hole.y - 10));
+      return dx <= 42 && dy <= 46;
+    });
+    if (target) {
+      this.whack(target);
+    }
   }
 
   private popRandomMole(): void {

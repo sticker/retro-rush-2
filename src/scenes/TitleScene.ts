@@ -2,7 +2,7 @@ import * as Phaser from "phaser";
 import { ASSET_KEYS, GAME_HEIGHT, GAME_WIDTH } from "../core/constants";
 import { popIn, tapRipple } from "../core/effects";
 import { addPixelText, addScanlines, coverImage } from "../core/phaser-helpers";
-import { getHighScore, getUnlockedEraLabel } from "../core/progression";
+import { getHighScore } from "../core/progression";
 import { sfx } from "../audio/sharedSfx";
 
 export class TitleScene extends Phaser.Scene {
@@ -33,22 +33,11 @@ export class TitleScene extends Phaser.Scene {
     this.time.delayedCall(150, () => popIn(this, titleJp));
 
     const highScore = getHighScore();
-    const era = getUnlockedEraLabel();
     this.add
       .text(GAME_WIDTH / 2, 374, `HIGH SCORE ${highScore.toString().padStart(2, "0")}`, {
         fontFamily: '"Courier New", monospace',
         fontSize: "22px",
         color: "#f8f0cc",
-        align: "center",
-        letterSpacing: 0,
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(GAME_WIDTH / 2, 412, `ERA ${era}`, {
-        fontFamily: '"Courier New", monospace',
-        fontSize: "17px",
-        color: "#9eefff",
         align: "center",
         letterSpacing: 0,
       })

@@ -25,7 +25,6 @@ export class RunScene extends Phaser.Scene {
   private miniTitleText!: Phaser.GameObjects.Text;
   private scoreText!: Phaser.GameObjects.Text;
   private livesText!: Phaser.GameObjects.Text;
-  private eraText!: Phaser.GameObjects.Text;
   private timerFill!: Phaser.GameObjects.Rectangle;
   private timerFrame!: Phaser.GameObjects.Rectangle;
   private instructionPlaque!: Phaser.GameObjects.Image;
@@ -137,46 +136,50 @@ export class RunScene extends Phaser.Scene {
   }
 
   private createHud(): void {
-    this.add.rectangle(122, 52, 170, 34, 0x050507, 0.72).setStrokeStyle(2, 0xf2c95b, 0.22);
-    this.add.rectangle(358, 52, 154, 34, 0x050507, 0.62).setStrokeStyle(2, 0xff5b45, 0.22);
+    const scorePanel = this.add
+      .rectangle(130, 92, 152, 30, 0x05070b, 0.88)
+      .setStrokeStyle(2, 0xffdf72, 0.48);
+    const lifePanel = this.add
+      .rectangle(355, 92, 112, 30, 0x05070b, 0.88)
+      .setStrokeStyle(2, 0xff6b57, 0.42);
+    const titlePanel = this.add
+      .rectangle(GAME_WIDTH / 2, 142, 256, 28, 0x05070b, 0.82)
+      .setStrokeStyle(2, 0xffdf72, 0.28);
+    this.hudLayer.add([scorePanel, lifePanel, titlePanel]);
 
     this.scoreText = this.add
-      .text(46, 52, "SCORE 00", {
+      .text(130, 92, "SCORE 00", {
         fontFamily: '"Courier New", monospace',
-        fontSize: "22px",
+        fontSize: "19px",
+        fontStyle: "900",
         color: "#fff0bc",
+        align: "center",
         letterSpacing: 0,
       })
-      .setOrigin(0, 0.5);
+      .setOrigin(0.5);
 
     this.livesText = this.add
-      .text(434, 52, "♥♥♥", {
+      .text(355, 92, "♥ ♥ ♥", {
         fontFamily: '"Courier New", monospace',
-        fontSize: "24px",
+        fontSize: "20px",
+        fontStyle: "900",
         color: "#ff6b57",
-        align: "right",
-        letterSpacing: 0,
-      })
-      .setOrigin(1, 0.5);
-
-    this.eraText = this.add
-      .text(GAME_WIDTH / 2, 92, "MONO CRT", {
-        fontFamily: '"Courier New", monospace',
-        fontSize: "16px",
-        color: "#9eefff",
         align: "center",
         letterSpacing: 0,
       })
       .setOrigin(0.5);
 
     this.miniTitleText = this.add
-      .text(50, 130, "", {
+      .text(GAME_WIDTH / 2, 142, "", {
         fontFamily: '"Courier New", monospace',
-        fontSize: "16px",
+        fontSize: "15px",
+        fontStyle: "900",
         color: "#d8e7f3",
+        align: "center",
         letterSpacing: 0,
       })
-      .setOrigin(0, 0.5);
+      .setOrigin(0.5);
+    this.hudLayer.add([this.scoreText, this.livesText, this.miniTitleText]);
 
     this.instructionText = addPixelText(this, GAME_WIDTH / 2, 384, "", 48, "#fff6ce");
     this.instructionText.setDepth(900);
@@ -197,6 +200,7 @@ export class RunScene extends Phaser.Scene {
     this.timerFrame = this.add.rectangle(82, 742, 316, 12, 0x050507).setOrigin(0, 0.5);
     this.timerFrame.setStrokeStyle(2, 0xffdf72, 0.32);
     this.timerFill = this.add.rectangle(82, 742, 316, 12, 0xffdf72).setOrigin(0, 0.5);
+    this.hudLayer.add([this.timerFrame, this.timerFill]);
   }
 
   private startNextRound(time: number): void {
@@ -295,12 +299,7 @@ export class RunScene extends Phaser.Scene {
     this.resultText.setVisible(false);
     this.instructionPlaque.setVisible(false);
     this.instructionText.setVisible(false);
-    this.scoreText.setVisible(false);
-    this.livesText.setVisible(false);
-    this.eraText.setVisible(false);
-    this.miniTitleText.setVisible(false);
-    this.timerFill.setVisible(false);
-    this.timerFrame.setVisible(false);
+    this.hudLayer.setVisible(false);
     const best = recordHighScore(this.score);
 
     const overlay = this.add.graphics().setDepth(875);
@@ -345,8 +344,7 @@ export class RunScene extends Phaser.Scene {
     const score = this.score.toString().padStart(2, "0");
     const theme = getThemeForScore(this.score);
     this.scoreText.setText(`SCORE ${score}`);
-    this.livesText.setText("♥".repeat(Math.max(0, this.lives)));
-    this.eraText.setText(theme.label).setColor(theme.accentText);
+    this.livesText.setText(Array.from({ length: Math.max(0, this.lives) }, () => "♥").join(" "));
     this.timerFill.setFillStyle(theme.secondary);
   }
 

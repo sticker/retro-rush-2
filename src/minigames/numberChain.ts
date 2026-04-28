@@ -7,7 +7,6 @@ import { Lifetime } from "../core/microgame";
 interface Orb {
   value: number;
   container: Phaser.GameObjects.Container;
-  hitZone: Phaser.GameObjects.Zone;
   orb: Phaser.GameObjects.Image;
   label: Phaser.GameObjects.Text;
   cleared: boolean;
@@ -90,15 +89,8 @@ class NumberChainGame {
         })
         .setOrigin(0.5);
       container.add([orb, label]);
-      const hitZone = this.ctx.scene.add
-        .zone(x, y, 76, 76)
-        .setOrigin(0.5)
-        .setInteractive({ useHandCursor: true });
-      const entry: Orb = { value, container, hitZone, orb, label, cleared: false };
-      const tap = () => this.tapOrb(entry);
-      hitZone.on("pointerdown", tap);
-      this.life.add(() => hitZone.off("pointerdown", tap));
-      this.ctx.layer.add([container, hitZone]);
+      const entry: Orb = { value, container, orb, label, cleared: false };
+      this.ctx.layer.add(container);
       this.ctx.scene.tweens.add({
         targets: orb,
         angle: value % 2 === 0 ? 6 : -6,
@@ -108,6 +100,22 @@ class NumberChainGame {
         ease: "Sine.easeInOut",
       });
       this.orbs.push(entry);
+    }
+
+    const tapAt = (pointer: Phaser.Input.Pointer) => this.tapAt(pointer.x, pointer.y);
+    this.ctx.scene.input.on("pointerdown", tapAt);
+    this.life.add(() => this.ctx.scene.input.off("pointerdown", tapAt));
+  }
+
+  private tapAt(x: number, y: number): void {
+    const target = this.orbs.find((orb) => {
+      if (orb.cleared) {
+        return false;
+      }
+      return Phaser.Math.Distance.Between(x, y, orb.container.x, orb.container.y) <= 40;
+    });
+    if (target) {
+      this.tapOrb(target);
     }
   }
 
@@ -123,7 +131,6 @@ class NumberChainGame {
     }
 
     entry.cleared = true;
-    entry.hitZone.disableInteractive();
     this.ctx.sfx.play("coin");
     sparkleBurst(this.ctx.scene, entry.container.x, entry.container.y, this.ctx.theme.secondary, 18, 830);
     this.ctx.scene.tweens.add({
