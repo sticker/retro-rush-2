@@ -51,3 +51,5 @@ export interface MicrogameDefinition {
 - 時代テーマ追加: `src/core/theme.ts`
 - 進行/スコア保存: `src/core/progression.ts`
 - 効果音追加: `src/audio/Sfx.ts`
+
+現在のミニゲーム登録は `src/minigames/index.ts` に集約しています。新規ゲームを追加したら、ここに import と配列登録を追加してください。

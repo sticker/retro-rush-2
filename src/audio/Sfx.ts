@@ -5,7 +5,9 @@ export type SfxKey =
   | "cue"
   | "blip"
   | "coin"
+  | "hit"
   | "jump"
+  | "perfect"
   | "swap"
   | "mash";
 
@@ -63,6 +65,11 @@ export class Sfx {
         this.tone(1568, 0.045, "square", now + 0.035, 0.042);
         this.tone(2349, 0.06, "triangle", now + 0.072, 0.026);
         break;
+      case "hit":
+        this.tone(220, 0.026, "square", now, 0.04);
+        this.tone(440, 0.032, "square", now + 0.026, 0.04);
+        this.noise(0.035, now, 0.024);
+        break;
       case "jump":
         this.sweep(310, 720, 0.095, "triangle", now, 0.04);
         break;
@@ -70,6 +77,12 @@ export class Sfx {
         this.tone(466, 0.035, "square", now, 0.035);
         this.tone(699, 0.04, "square", now + 0.035, 0.035);
         this.tone(932, 0.035, "triangle", now + 0.075, 0.026);
+        break;
+      case "perfect":
+        this.tone(784, 0.05, "square", now, 0.045);
+        this.tone(1175, 0.06, "square", now + 0.045, 0.045);
+        this.tone(1568, 0.08, "triangle", now + 0.105, 0.04);
+        this.noise(0.05, now + 0.105, 0.018);
         break;
       case "mash":
         this.tone(170 + Math.random() * 100, 0.022, "square", now, 0.03);

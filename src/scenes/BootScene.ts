@@ -20,6 +20,11 @@ export class BootScene extends Phaser.Scene {
     this.load.image(ASSET_KEYS.coin, "/assets/sprites/coin.png");
     this.load.image(ASSET_KEYS.circuitSocket, "/assets/sprites/circuit-socket.png");
     this.load.image(ASSET_KEYS.mashButton, "/assets/sprites/mash-button.png");
+    this.load.image(ASSET_KEYS.mole, "/assets/sprites/mole.png");
+    this.load.image(ASSET_KEYS.moleHole, "/assets/sprites/mole-hole.png");
+    this.load.image(ASSET_KEYS.moleHoleFront, "/assets/sprites/mole-hole-front.png");
+    this.load.image(ASSET_KEYS.numberOrb, "/assets/sprites/number-orb.png");
+    this.load.image(ASSET_KEYS.timingGate, "/assets/sprites/timing-gate.png");
   }
 
   create(): void {

@@ -21,6 +21,9 @@ npm run build
 - `Coin Hop`: タップまたは Space でジャンプしてコインを集める
 - `Circuit Snap`: 色をタップで切り替えてターゲットと一致させる
 - `Button Mash`: タップまたは Space を連打してメーターを満たす
+- `Whack Mole`: ランダムに頭を出すモグラを叩く
+- `Number Chain`: 1から7までの番号オーブを順番にタップする
+- `Beat Timing`: 流れるカーソルがゲートに重なった瞬間にタップする
 
 ## ディレクトリ
 

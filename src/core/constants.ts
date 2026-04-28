@@ -23,4 +23,9 @@ export const ASSET_KEYS = {
   coin: "sprite-coin",
   circuitSocket: "sprite-circuit-socket",
   mashButton: "sprite-mash-button",
+  mole: "sprite-mole",
+  moleHole: "sprite-mole-hole",
+  moleHoleFront: "sprite-mole-hole-front",
+  numberOrb: "sprite-number-orb",
+  timingGate: "sprite-timing-gate",
 } as const;
